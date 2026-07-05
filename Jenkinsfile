@@ -9,7 +9,7 @@ pipeline{
         AWS_REGION = "us-east-2"
         ACCOUNT_ID = "982614288416"
         ECR_REPO_BACKEND = "food-delivery-backend"
-        ECR_REPO_FRONTEND = "food-delivery-backend"
+        ECR_REPO_FRONTEND = "food-delivery-frontend"
         ECR_REPO_ADMIN = "food-delivery-admin"
     }
 
