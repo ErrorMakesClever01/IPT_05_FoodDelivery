@@ -9,8 +9,8 @@ pipeline{
         AWS_REGION = "us-east-2"
         ACCOUNT_ID = "982614288416"
         ECR_REPO_BACKEND = "food-delivery-backend"
-        ECR_REPO_FRONTEND = "food-delivery-backend"
-        ECR_REPO_ADMIN = "food-delivery-backend"
+        ECR_REPO_FRONTEND = "food-delivery-frontend"
+        ECR_REPO_ADMIN = "food-delivery-admin"
     }
 
     stages{
@@ -30,7 +30,7 @@ pipeline{
 		steps{
             withSonarQubeEnv('sonarserver') {
                 sh '''
-                     /opt/sonar-scanner-8.0.1.6346-linux-x64/bin/sonar-scanner \
+                     /opt/sonar-scanner-8.1.0.6389-linux-x64/bin/sonar-scanner \
                      -Dsonar.projectBaseDir=. \
                      -Dsonar.sources=. \
                      -Dsonar.projectKey=sonarqube-Jenkins:$BUILD_NUMBER-$BUILD_ID \
@@ -72,7 +72,7 @@ pipeline{
             {
                 sh '''
                 cd ./backend
-                docker build -t food-del-backend:$BUILD_NUMBER
+                docker build -t food-del-backend:$BUILD_NUMBER .
                 docker tag food-del-backend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:$BUILD_NUMBER
                 cd ..
@@ -86,7 +86,7 @@ pipeline{
             {
                 sh '''
                 cd ./frontend
-                docker build -t food-del-frontend:$BUILD_NUMBER
+                docker build -t food-del-frontend:$BUILD_NUMBER .
                 docker tag food-del-frontend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:$BUILD_NUMBER
                 cd ..
@@ -100,7 +100,7 @@ pipeline{
             {
                 sh '''
                 cd ./admin
-                docker build -t food-del-admin:$BUILD_NUMBER
+                docker build -t food-del-admin:$BUILD_NUMBER .
                 docker tag food-del-admin:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:$BUILD_NUMBER
                 cd ..
