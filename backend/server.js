@@ -1,5 +1,6 @@
 import express  from "express"
 import cors from 'cors'
+import loadSecrets from "./config/secrets.js";
 import { connectDB } from "./config/db.js"
 import userRouter from "./routes/userRoute.js"
 import foodRouter from "./routes/foodRoute.js"
@@ -12,13 +13,9 @@ import orderRouter from "./routes/orderRoute.js"
 const app = express()
 const port = process.env.PORT || 4000;
 
-
 // middlewares
 app.use(express.json())
 app.use(cors())
-
-// db connection
-connectDB()
 
 // api endpoints
 app.use("/api/user", userRouter)
@@ -74,15 +71,41 @@ app.get("/metrics", async (req, res) => {
     res.end(await client.register.metrics());
 });
 
-// Logging the Status of Server and Metrics Endpoints
-
-app.get("/", (req, res) => {
+ app.get("/", (req, res) => {
     res.send("API Working")
   });
 
+const startServer = async () => {
 
-app.listen(port, () => {
-  
-  console.log(`Server started on http://localhost:${port}`);
-  console.log(`Prometheus Metrics: http://localhost:${port}/metrics`);
-});
+  try {
+
+    console.log("Loading AWS Secrets...");
+
+    const secrets = await loadSecrets();
+
+    Object.assign(process.env, secrets);
+
+    console.log("AWS Secrets Loaded");
+
+    await connectDB();
+
+    app.listen(port, () => {
+
+      console.log(`Server started on http://localhost:${port}`);
+      console.log(`Prometheus Metrics: http://localhost:${port}/metrics`);
+
+    });
+
+  } catch (error) {
+
+    console.error("Failed to load AWS Secrets");
+
+    console.error(error);
+
+    process.exit(1);
+
+  }
+
+};
+
+startServer();
