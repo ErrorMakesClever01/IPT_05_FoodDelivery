@@ -66,12 +66,25 @@ pipeline{
             }
         }
 
-        stage ('Build and push Food Delivery Backend Image')
+        // Backend - Build, Scan and Push
+
+        stage ('Build & Scan Food Delivery Backend Image')
         {
             steps
             {
                 sh '''
                 cd ./backend
+                docker build -t food-del-backend:$BUILD_NUMBER .
+                docker compose -f ../docker-compose.yml run --rm -v $(pwd):/workspace trivy image --severity HIGH,CRITICAL --exit-code 1 --format json -o /workspace/trivy-report_backend.json food-del-backend:$BUILD_NUMBER
+                '''
+            }
+        }
+
+        stage ('Push Food Delivery Backend Image to ECR')
+        {
+            steps
+            {
+                sh '''
                 docker build -t food-del-backend:$BUILD_NUMBER .
                 docker tag food-del-backend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:$BUILD_NUMBER
@@ -82,38 +95,68 @@ pipeline{
             }
         }
 
-        stage ('Build and push Food Delivery Frontend Image')
+
+
+        // Frontend - Build, Scan and Push
+
+        stage ('Build & Scan Food Delivery Frontend Image')
         {
             steps
             {
                 sh '''
                 cd ./frontend
                 docker build -t food-del-frontend:$BUILD_NUMBER .
+                docker compose -f ../docker-compose.yml run --rm -v $(pwd):/workspace trivy image --severity HIGH,CRITICAL --exit-code 1 --format json -o /workspace/trivy-report_frontend.json food-del-frontend:$BUILD_NUMBER
+                '''
+            }
+        }
+
+        stage ('Push Food Delivery Frontend Image to ECR')
+        {
+            steps
+            {
+                sh '''
+                docker build -t food-del-frontend:$BUILD_NUMBER .
                 docker tag food-del-frontend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:$BUILD_NUMBER
-				docker tag food-del-frontend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:latest
+				docker tag food-del-backend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:latest
 				docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:latest
                 cd ..
                 '''
             }
         }
 
-        stage ('Build and push Food Delivery Admin Image')
+        // Admin - Build, Scan and Push
+
+        stage ('Build & Scan Food Admin Frontend Image')
         {
             steps
             {
                 sh '''
                 cd ./admin
                 docker build -t food-del-admin:$BUILD_NUMBER .
+                docker compose -f ../docker-compose.yml run --rm -v $(pwd):/workspace trivy image --severity HIGH,CRITICAL --exit-code 1 --format json -o /workspace/trivy-report_admin.json food-del-admin:$BUILD_NUMBER
+
+                '''
+            }
+        }
+
+        stage ('Push Food Delivery Admin Image to ECR')
+        {
+            steps
+            {
+                sh '''
+                docker build -t food-del-admin:$BUILD_NUMBER .
                 docker tag food-del-admin:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:$BUILD_NUMBER
                 docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:$BUILD_NUMBER
-				docker tag  food-del-admin:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:latest
+				docker tag food-del-backend:$BUILD_NUMBER $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:latest
 				docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_ADMIN:latest
                 cd ..
                 '''
             }
         }
 
+            
 
     }
 
