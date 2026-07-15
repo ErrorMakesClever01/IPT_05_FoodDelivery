@@ -1,3 +1,25 @@
+def printTrivySummary(String reportFile) {
+    sh """
+        HIGH=\$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="HIGH")] | length' ${reportFile})
+        CRITICAL=\$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' ${reportFile})
+        TOTAL=\$((HIGH + CRITICAL))
+
+        echo "==================================="
+        echo "Trivy Vulnerability Summary"
+        echo "HIGH     : \$HIGH"
+        echo "CRITICAL : \$CRITICAL"
+        echo "TOTAL    : \$TOTAL"
+        echo "==================================="
+
+        if [ "\$TOTAL" -gt 0 ]; then
+            echo "SECURITY SCAN FAILED"
+            echo "See ${reportFile} for details"
+        else
+            echo "No HIGH/CRITICAL vulnerabilities found"
+        fi
+    """
+}
+
 pipeline{
     agent 
     {
@@ -75,10 +97,24 @@ pipeline{
                 sh '''
                 cd ./backend
                 docker build -t food-del-backend:$BUILD_NUMBER .
-                docker compose -f ../docker-compose.yml run --rm -v $(pwd):/workspace trivy image --severity HIGH,CRITICAL --exit-code 1 --format json -o /workspace/trivy-report_backend.json food-del-backend:$BUILD_NUMBER
-                '''
-            }
-        }
+				'''
+				script 
+				{
+					int trivyExitCode = sh(
+						script: '''
+								docker compose -f ../docker-compose.yml run --rm -v $(pwd):/workspace trivy image --severity HIGH,CRITICAL --exit-code 1 --format json -o /workspace/trivy-report.json food-del-backend:$BUILD_NUMBER
+					            ''',
+						returnStatus: true
+						)
+						printTrivySummary('trivy-report.json')
+						if (trivyExitCode != 0) 
+						{
+							error('HIGH/CRITICAL vulnerabilities detected')
+						}
+								
+				}
+			}
+		}
 
         stage ('Push Food Delivery Backend Image to ECR')
         {
