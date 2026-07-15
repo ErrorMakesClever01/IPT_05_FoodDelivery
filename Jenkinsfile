@@ -98,7 +98,7 @@ pipeline{
             {
                 sh '''
                 cd ./backend
-                docker build -t food-del-backend:$BUILD_NUMBER .
+                docker build --pull -t food-del-backend:$BUILD_NUMBER .
 				'''
 				script 
 				{
@@ -142,7 +142,7 @@ pipeline{
             {
                 sh '''
                 cd ./frontend
-                docker build -t food-del-frontend:$BUILD_NUMBER .
+                docker build --pull -t food-del-frontend:$BUILD_NUMBER .
 				'''
 				script 
 				{
@@ -183,7 +183,7 @@ pipeline{
             {
                 sh '''
                 cd ./admin
-                docker build -t food-del-admin:$BUILD_NUMBER .
+                docker build --pull -t food-del-admin:$BUILD_NUMBER .
 				'''
 				script 
 				{
